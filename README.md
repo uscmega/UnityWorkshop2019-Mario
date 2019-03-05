@@ -1,2 +1,6 @@
-# UnityWorkshop2019-Mario
-A MEGA workshop that teaches you how to create a Mario level in 2 hours!
+1. use pixels per unit to scale
+
+Challenges
+1. Implement the "turn animation"
+
+Play Super Mario Bros here -> https://supermarioemulator.com/mario.php
