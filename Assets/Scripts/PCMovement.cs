@@ -8,10 +8,23 @@ using UnityEngine;
 public class PCMovement : CharacterMovement
 {
     public float acceleration = 20;
-    int numJumps = 1;
+    public int numJumps = 1;
+    private int m_AvailableJumps;
     private float m_HorizontalInput;
     private int m_FaceDirection;
     private bool m_jumpTrigger;
+
+    /// <summary>
+    /// Start is called on the frame when a script is enabled just before
+    /// any of the Update methods is called the first time.
+    /// </summary>
+    protected override void Start()
+    {
+        // call the parent
+        base.Start();
+        // initialize available jumps
+        m_AvailableJumps = numJumps;
+    }
 
     // Update is called once per frame
     protected override void Update()
@@ -23,7 +36,6 @@ public class PCMovement : CharacterMovement
             // catch the jump key to use it in the Fixed/Physics update
             m_jumpTrigger = true;
         }
-
 
         m_HorizontalInput = Input.GetAxis("Horizontal");
         if (m_HorizontalInput != 0)
@@ -42,12 +54,21 @@ public class PCMovement : CharacterMovement
 
     protected override void FixedUpdate()
     {
-        if(m_jumpTrigger)
+        base.FixedUpdate();
+
+        if (m_IsGrounded)
+        {
+            m_AvailableJumps = numJumps;
+        }
+
+        if (m_jumpTrigger)
         {
             Jump();
             m_jumpTrigger = false;
         }
         Move(m_HorizontalInput);
+
+        
     }
 
     protected override void Move(float amount)
@@ -59,8 +80,16 @@ public class PCMovement : CharacterMovement
         {
             // If the actual speed exceeds the speed limit
             // Apply force in the opposite direction
-            Debug.Log("delta: " + (speed - currentSpeed));
             m_Rigidbody2D.AddForce(Vector2.left * m_FaceDirection * (currentSpeed - speed));
+        }
+    }
+
+    protected override void Jump()
+    {
+        if (m_AvailableJumps > 0)
+        {
+            base.Jump();
+            m_AvailableJumps--;
         }
     }
 
@@ -71,7 +100,7 @@ public class PCMovement : CharacterMovement
     /// <param name="other">The Collision2D data associated with this collision.</param>
     void OnCollisionEnter2D(Collision2D other)
     {
-        Debug.Log(other.gameObject.name);
+
     }
 
     protected override void UpdateAnimator()

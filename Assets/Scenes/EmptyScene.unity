@@ -389,7 +389,7 @@ GameObject:
   m_Component:
   - component: {fileID: 743878273}
   - component: {fileID: 743878274}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: LeftBound
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -445,7 +445,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1113598057}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: DamageCollider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -23722,6 +23722,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Chr_Goomba
+      objectReference: {fileID: 0}
+    - target: {fileID: 8358641312085898415, guid: 997163ca7d4bca54ea0bd89329f4663d,
+        type: 3}
+      propertyPath: m_Layer
+      value: 11
       objectReference: {fileID: 0}
     - target: {fileID: 1718597300293245494, guid: 997163ca7d4bca54ea0bd89329f4663d,
         type: 3}

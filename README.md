@@ -5,6 +5,9 @@ Challenges
 
 Play Super Mario Bros here -> https://supermarioemulator.com/mario.php
 
+Installation
+...
+
 Configuration
 1. Pull project from ...
 1. Open the project in Unity

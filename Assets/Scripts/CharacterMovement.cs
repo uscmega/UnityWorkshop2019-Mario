@@ -16,11 +16,14 @@ public abstract class CharacterMovement : MonoBehaviour
     protected Rigidbody2D m_Rigidbody2D;
     // a Animator reference to cache the component
     protected Animator m_Animator;
+    protected bool m_IsGrounded;
     private float m_DistFromGround;
     private Collider2D m_Collider2D;
     private Vector2 m_LowerLeftCorner;
     private Vector2 m_LowerRightCorner;
     private RaycastHit2D[] raycastHits;
+    private Vector3 m_originalPosition;
+    private readonly float k_SmallNumber = 0.01f;
 
 
     // Start is called before the first frame update
@@ -60,7 +63,7 @@ public abstract class CharacterMovement : MonoBehaviour
         m_Rigidbody2D.velocity = new Vector2(amount * speed, m_Rigidbody2D.velocity.y);
     }
 
-    protected void Jump()
+    protected virtual void Jump()
     {
         // Apply "jumpForce' on the y-axis
         // The second parameter tells Unity to use an impulse force.
@@ -71,17 +74,17 @@ public abstract class CharacterMovement : MonoBehaviour
 
     private void CalculatePosition()
     {
-        var centralRayOrigin = transform.position + Vector3.up * 0.01f;
+        var centralRayOrigin = transform.position + Vector3.up * k_SmallNumber;
         var leftRayOrigin = centralRayOrigin + (Vector3)m_LowerLeftCorner;
         var rightRayOrigin = centralRayOrigin + (Vector3)m_LowerRightCorner;
 
         // Cast a ray from the position of this object, to 5 units down, and only detect objects in platformMask 
         var centerHit2D = raycastHits[0] =
-        Physics2D.Raycast(centralRayOrigin, Vector2.down, 1, platformMask.value);
+        Physics2D.Raycast(centralRayOrigin, Vector2.down, 1 + k_SmallNumber, platformMask.value);
         var leftHit2D = raycastHits[1] =
-        Physics2D.Raycast(leftRayOrigin, Vector2.down, 1, platformMask.value);
+        Physics2D.Raycast(leftRayOrigin, Vector2.down, 1 + k_SmallNumber, platformMask.value);
         var rightHit2D = raycastHits[2] =
-        Physics2D.Raycast(rightRayOrigin, Vector2.down, 1, platformMask.value);
+        Physics2D.Raycast(rightRayOrigin, Vector2.down, 1 + k_SmallNumber, platformMask.value);
 
         // Use Debug.DrawRay to draw a visaulization of the raycast in the Scene View
         Debug.DrawLine(centralRayOrigin, centralRayOrigin + Vector3.down, Color.red);
@@ -98,10 +101,12 @@ public abstract class CharacterMovement : MonoBehaviour
             if (hit.collider != null)
             {
                 // If something is detected, store the distance from the result
-                currentDist = centerHit2D.distance;
+                currentDist = centerHit2D.distance - k_SmallNumber;
             }
             m_DistFromGround = Mathf.Min(m_DistFromGround, currentDist);
         }
+
+        m_IsGrounded = m_DistFromGround <= 0.02f;
     }
 
     protected virtual void UpdateAnimator()
