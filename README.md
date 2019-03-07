@@ -1,6 +1,11 @@
 ## Table of Contents  
 - [Quick Start](#quick-start)  
 - [Setup](#setup)  
+- [Programming](#programming)  
+- [Level Editing](#level-editing)  
+- [Creators](#creators)  
+- [Organization](#organization)  
+
 
 ## Quick Start
 
@@ -32,44 +37,51 @@ Lastly, for reference, You can play Super Mario Bros [here](https://supermarioem
 
 ## Setup
 1. Open Unity and click "Open". Navigate to where you cloned/unzipped the project, and hit "Select Folder".
-1. In the project view, under the Assets/Scenes, double-click EmptyScene if it's not open already.
-1. Right-click in hierarchy tab, and create a Quad from 3D Objects for a temporary ground
+1. In the Project tab, double-click EmptyScene under Assets/Scenes.
+1. Right-click in the [Hierarchy window](https://docs.unity3d.com/Manual/Hierarchy.html), and create a Quad from 3D Objects for a temporary ground
 ![01createquad png](https://user-images.githubusercontent.com/20757517/53938558-7c222d80-4065-11e9-99d7-687e74d437bc.jpg)
-1. From the Prefab folder, drag and drop the Mario prefab to the scene view (Not the game view!) 
+1. From the Prefab folder, drag and drop the Mario [prefab](https://docs.unity3d.com/Manual/Prefabs.html) to the [Scene View](https://docs.unity3d.com/Manual/UsingTheSceneView.html) (not the [Game View](https://docs.unity3d.com/Manual/GameView.html)!) 
 ![03prefab png](https://user-images.githubusercontent.com/20757517/53938655-b5f33400-4065-11e9-926b-a05ab5851808.jpg)
 
 1. Compared to the 1x1 quad, Mario appears too small! OMG how do we fix that?
-1. PPU (Pixel Per Unit) is how Unity scales all your images and it also has . Our images are 32x32 pixels but their PPU's are 100, which means Mario would be 3.125 meters tall! OK, let's set the PPU to 32 so that Mario and other blocks are all 1 meter tall! Select all the images in the Images folder and use the following setting (EXCEPT PIVOTS)
+1. **PPU (Pixel Per Unit)** is how Unity scales all your images. Our images are 32x32 pixels but their PPU's are 100, which means Mario would be 3.125 meters tall! Let's set the PPU to 32 to match the sprite sizes! Select all the images in the Images folder and use the following setting (except fro pivots)
 ![04spritesettingsjpg](https://user-images.githubusercontent.com/20757517/53939235-53029c80-4067-11e9-9458-09cfcf4c9a36.jpg)
 
 1. Now, use "Q", "W", "E", "R", "T", "Y" to conveniently navigate between tools and scale your Quad up so there's enough space for Mario to walk on.
 
 ![02navigatetools](https://user-images.githubusercontent.com/20757517/53939164-28b0df00-4067-11e9-8c0d-a56f598c8303.jpg)
 
-1. Hmmm, when we zoom in a lot, Mario looks super blurry! Maybe we should give up... But we haven't explored all image settings yet! Click on an image, and you can set the "Filter Mode" to "Point" and "Compression" to "None"
+1. When we zoom in a lot, Mario looks super blurry! Select all the images under Images folder, and you can set the "Filter Mode" to "Point" and "Compression" to "None"
 1. Let's also set the "Pivot" to "Bottom" because Mario's feet should be on the bottom of the sprite (this is common practice)
 1. Now, when we click "Play", nothing happens! Maybe it's not too late to quit?
 
 ## Programming
+### Adding Physics
 1. Unity uses components to make things work. Let's start off by adding gravity to Mario! Click on Mario, Click "Add Component" and type in "Rigidbody", we can see Rigidbody and Rigidbody2D. Since we are making a 2D game, we will go with Rigidbody2D.
-1. Under Rigidbody2D's Constraints menu, let's tick "Freeze Rotation". You can also leave it unticked to see what will happen and suffer the consequences :>
-2. If we "play" now, Mario simply falls indefinitely into the abyss. That's because we haven't added colliders yet. Let's add 2D BoxColliders to the Quad/floor and Mario the same way we add the Rigidbody (or any other component) 
-3. The physics is fully working now! Let's start adding our own scripts to animate Mario!
-4. In the Scripts folder, right-click and create a C# script and name it "Character Movement". Drag and drop it onto Mario.
-5. Double-click on CharacterMovement to edit in the default code editor (you can set your preferred editor in Edit->Preferences->External Tools)
-6. You can see that the code is already generated for you. It inherits from Monobehaviour, which is a class you'll have to regularly use in Unity. Special functions like "Start", "Update" will be regularly be called by Unity to run your code. More info on execution order can be found [here](https://docs.unity3d.com/Manual/ExecutionOrder.html)
-7. Let's add a couple of class members and functions. CharacterMovement will serve as a base for all the Character controls we make.
-8. Let's also make a PCMovement class, and copy paste the code in. (PC stands for Playable Character)
-7. Now drag and drop the PCMovement script onto Mario. We can see that the public fields are dispalyed in the [Inspector Window] (https://docs.unity3d.com/Manual/UsingTheInspector.html) and the private members are hidden. If at any time you need to see the private members, simply click on the arrow on the upper-right corner and select "Debug"
-8. In the Inspector, set PCMovement's "Speed" and "Jump Force" to 10. We can now move Mario around!
+1. Under Rigidbody2D's Constraints menu, let's tick "Freeze Rotation". If it's not selected, Mario would actually be able to rotate freely like a wheel, but we don't want that!
+2. If we "Play" now, Mario simply falls indefinitely into the abyss. That's because we haven't added colliders yet. Let's add 2D BoxColliders to the Quad/floor and Mario the same way we add the Rigidbody (or any other component) 
+
+The physics is should be fully working now! Let's start adding our own scripts to animate Mario!
+
+### Adding Logic
+1. In the Scripts folder, right-click and create a C# script and name it "Character Movement". Drag and drop it onto Mario.
+1. Double-click on CharacterMovement to edit in the default code editor (you can set your preferred editor in Edit->Preferences->External Tools)
+1. You can see that the code is already generated for you. It inherits from Monobehaviour, which is a class you'll have to regularly use in Unity. Special functions like "Start", "Update" will be regularly be called by Unity to run your code. More info on execution order can be found [here](https://docs.unity3d.com/Manual/ExecutionOrder.html)
+1. Let's add a couple of class members and functions. CharacterMovement will serve as a base for all the Character controls we make.
+1. Let's also make a PCMovement class, and copy paste the code in. (PC stands for Playable Character)
+1. Now drag and drop the PCMovement script onto Mario. We can see that the public fields are dispalyed in the [Inspector Window] (https://docs.unity3d.com/Manual/UsingTheInspector.html) and the private members are hidden. If at any time you need to see the private members, simply click on the arrow on the upper-right corner and select "Debug"
+1. In the Inspector, set PCMovement's "Speed" and "Jump Force" to 10. We can now move Mario around!
 
 ## Level Editing
-1. We can certainly drag and drop images one by one to create the level, but this extremely inefficient. Instead, let's use Unity's tilemap to speed up the process. Go to Window->2D->Tile Pallete.
+### Create a Pallete
+1. We can certainly drag and drop images one by one to create the level, but this extremely inefficient. Instead, let's use Unity's [Tilemap](https://docs.unity3d.com/Manual/class-Tilemap.html) to speed up the process. Go to Window->2D->Tile Pallete.
 1. Let's first drag the Background from the Images folder, and set its Y axis position to -1 to align it with the ground
 1. Because there's nothing rendered behind the background, a default gray color is applied from the camera. Let's go to the Main Camera and click the eye dropper in the "Background" field, and pick the background color from the scene view. Note that the scene view background color stays the same, but the actual rendered footage (in the Game View) will reflect this change.
 1. In the Tile Pallete window, choose "Create New Pallete", name the pallete CommonTiles, and place it under Assets/Tilemap
 1. Select all the block sprites into the Tile Palette and save them under Assets/Tilemap
-1. Using the Tile Pallete, we can now paint in the level very quickly!
+Using the Tile Pallete, we can now paint in the level very quickly!
+
+### Create a Tilemap
 1. Similar to how we created the quad, we can right-click in the hierarchy window and create 2D Object->Tilemap.
 1. Let's name it "Static Tilemap" and paint everything that doesn't move, such as the ground, in this layer. We'll also duplicate it by hitting "Ctrl+D" on Windows or "Cmd+D" on Mac, and name the duplicate "Interactive Tilemap", where we'll paint interactive objects such as the question block. 
 1. Let's delete the quad and click on StaticTilemap. Mess around with the tilemap to get familiar with the tool!
