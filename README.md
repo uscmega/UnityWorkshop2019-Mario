@@ -77,8 +77,250 @@ Double-click on CharacterMovement to edit in the default code editor (you can se
 You can see that the code is already generated for you. It inherits from Monobehaviour, which is a class you'll have to regularly use in Unity. Special functions like "Start", "Update" will be regularly be called by Unity to run your code. More info on execution order can be found [here](https://docs.unity3d.com/Manual/ExecutionOrder.html)
 
 Let's add a couple of class members and functions. CharacterMovement will serve as a base for all the Character controls we make.
+Copy and paste the code below
+```csharp
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+/// <summary>
+/// Controls character movement
+/// </summary>
+// "abstract" means that this component cannot used directly on a gameobject.
+// we need to make child components that expand upon it (PCMovement, NPCMovement, etc.)!
+public abstract class CharacterMovement : MonoBehaviour
+{
+    public LayerMask platformMask;
+    public float speed;
+    public float jumpForce;
+    // a Rigidbody reference to cache the component
+    protected Rigidbody2D m_Rigidbody2D;
+    // a Animator reference to cache the component
+    protected Animator m_Animator;
+    protected bool m_IsGrounded;
+    private float m_DistFromGround;
+    private Collider2D m_Collider2D;
+    private Vector2 m_LowerLeftCorner;
+    private Vector2 m_LowerRightCorner;
+    private RaycastHit2D[] raycastHits;
+    private Vector3 m_originalPosition;
+    private readonly float k_SmallNumber = 0.01f;
+
+
+    // Start is called before the first frame update
+    protected virtual void Start()
+    {
+        // cache the components using the GetComponent method
+        m_Rigidbody2D = GetComponent<Rigidbody2D>();
+        m_Animator = GetComponent<Animator>();
+        m_Collider2D = GetComponent<Collider2D>();
+        m_LowerLeftCorner = m_Collider2D.offset +
+        new Vector2(-m_Collider2D.bounds.extents.x, -m_Collider2D.bounds.extents.y);
+        m_LowerRightCorner = m_Collider2D.offset +
+        new Vector2(m_Collider2D.bounds.extents.x, -m_Collider2D.bounds.extents.y);
+        raycastHits = new RaycastHit2D[3];
+    }
+
+    /// <summary>
+    /// Update is called every frame, if the MonoBehaviour is enabled.
+    /// </summary>
+    protected virtual void Update()
+    {
+        UpdateAnimator();
+    }
+
+    /// <summary>
+    /// This function is called every fixed framerate frame, if the MonoBehaviour is enabled.
+    /// </summary>
+    protected virtual void FixedUpdate()
+    {
+        CalculatePosition();
+    }
+
+    protected virtual void Move(float amount)
+    {
+        // Preserve the vertical speed by using the original velocity.y
+        // and apply the horizontal speed on the x component/axis 
+        m_Rigidbody2D.velocity = new Vector2(amount * speed, m_Rigidbody2D.velocity.y);
+    }
+
+    protected virtual void Jump()
+    {
+        // Apply "jumpForce' on the y-axis
+        // The second parameter tells Unity to use an impulse force.
+        // If left empty, Unity will apply a slow, continuous "push" force by default,
+        // which doesn't work for a jump - a impulsive upward force 
+        m_Rigidbody2D.AddForce(new Vector2(0, jumpForce), ForceMode2D.Impulse);
+    }
+
+    private void CalculatePosition()
+    {
+        var centralRayOrigin = transform.position + Vector3.up * k_SmallNumber;
+        var leftRayOrigin = centralRayOrigin + (Vector3)m_LowerLeftCorner;
+        var rightRayOrigin = centralRayOrigin + (Vector3)m_LowerRightCorner;
+
+        // Cast a ray from the position of this object, to 5 units down, and only detect objects in platformMask 
+        var centerHit2D = raycastHits[0] =
+        Physics2D.Raycast(centralRayOrigin, Vector2.down, 1 + k_SmallNumber, platformMask.value);
+        var leftHit2D = raycastHits[1] =
+        Physics2D.Raycast(leftRayOrigin, Vector2.down, 1 + k_SmallNumber, platformMask.value);
+        var rightHit2D = raycastHits[2] =
+        Physics2D.Raycast(rightRayOrigin, Vector2.down, 1 + k_SmallNumber, platformMask.value);
+
+        // Use Debug.DrawRay to draw a visaulization of the raycast in the Scene View
+        Debug.DrawLine(centralRayOrigin, centralRayOrigin + Vector3.down, Color.red);
+        Debug.DrawLine(leftRayOrigin, leftRayOrigin + Vector3.down, Color.red);
+        Debug.DrawLine(rightRayOrigin, rightRayOrigin + Vector3.down, Color.red);
+
+        // Reset the distance from ground for new calculation
+        m_DistFromGround = 1;
+        foreach (var hit in raycastHits)
+        {
+            // If nothing is hit, character should be at least 1+ units from the ground
+            // hence the default value of 1
+            float currentDist = 1;
+            if (hit.collider != null)
+            {
+                // If something is detected, store the distance from the result
+                currentDist = centerHit2D.distance - k_SmallNumber;
+            }
+            m_DistFromGround = Mathf.Min(m_DistFromGround, currentDist);
+        }
+
+        m_IsGrounded = m_DistFromGround <= 0.02f;
+    }
+
+    protected virtual void UpdateAnimator()
+    {
+        m_Animator.SetFloat("distFromGround", m_DistFromGround);
+    }
+
+    /// <summary>
+    /// Callback to draw gizmos that are pickable and always drawn.
+    /// </summary>
+    void OnDrawGizmos()
+    {
+        if (raycastHits != null)
+        {
+            foreach (var hit in raycastHits)
+            {
+                // if raycast hits something, draw a little green circle to indicate it
+                if (hit.collider != null)
+                {
+                    Gizmos.color = Color.green;
+                    Gizmos.DrawSphere(hit.point, 0.1f);
+                }
+            }
+        }
+    }
+}
+```
 
 Let's also make a PCMovement class, and copy paste the code in. (PC stands for Playable Character)
+```csharp
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+/// <summary>
+/// Playable Character movement
+/// </summary>
+public class PCMovement : CharacterMovement
+{
+    public float acceleration = 20;
+    public int numJumps = 1;
+    private int m_AvailableJumps;
+    private float m_HorizontalInput;
+    private int m_FaceDirection;
+    private bool m_jumpTrigger;
+
+    /// <summary>
+    /// Start is called on the frame when a script is enabled just before
+    /// any of the Update methods is called the first time.
+    /// </summary>
+    protected override void Start()
+    {
+        // call the parent
+        base.Start();
+        // initialize available jumps
+        m_AvailableJumps = numJumps;
+    }
+
+    // Update is called once per frame
+    protected override void Update()
+    {
+        base.Update();
+        // Whenever "W" is pressed, trigger a jump
+        if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow))
+        {
+            // catch the jump key to use it in the Fixed/Physics update
+            m_jumpTrigger = true;
+        }
+
+        m_HorizontalInput = Input.GetAxis("Horizontal");
+        if (m_HorizontalInput != 0)
+        {
+            m_FaceDirection = (int)Mathf.Sign(m_HorizontalInput);
+        }
+        if (m_FaceDirection < 0)
+        {
+            transform.localScale = new Vector3(-1, 1, 1);
+        }
+        else
+        {
+            transform.localScale = new Vector3(1, 1, 1);
+        }
+    }
+
+    protected override void FixedUpdate()
+    {
+        base.FixedUpdate();
+
+        if (m_IsGrounded)
+        {
+            m_AvailableJumps = numJumps;
+        }
+
+        if (m_jumpTrigger)
+        {
+            Jump();
+            m_jumpTrigger = false;
+        }
+        Move(m_HorizontalInput);
+
+        
+    }
+
+    protected override void Move(float amount)
+    {
+        // Apply a continuous force to the rigidbody
+        m_Rigidbody2D.AddForce(Vector2.right * acceleration * amount);
+        var currentSpeed = Mathf.Abs(m_Rigidbody2D.velocity.x);
+        if (currentSpeed > speed)
+        {
+            // If the actual speed exceeds the speed limit
+            // Apply force in the opposite direction
+            m_Rigidbody2D.AddForce(Vector2.left * m_FaceDirection * (currentSpeed - speed));
+        }
+    }
+
+    protected override void Jump()
+    {
+        if (m_AvailableJumps > 0)
+        {
+            base.Jump();
+            m_AvailableJumps--;
+        }
+    }
+
+    protected override void UpdateAnimator()
+    {
+        base.UpdateAnimator();
+        m_Animator.SetFloat("speed", Mathf.Abs(m_HorizontalInput) * speed);
+    }
+}
+
+```
 
 Now drag and drop the PCMovement script onto Mario. We can see that the public fields are dispalyed in the [Inspector Window] (https://docs.unity3d.com/Manual/UsingTheInspector.html) and the private members are hidden. If at any time you need to see the private members, simply click on the arrow on the upper-right corner and select "Debug"
 
